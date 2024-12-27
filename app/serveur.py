@@ -1,7 +1,11 @@
 from typing import Union
-from fastapi import FastAPI
-from camembert import creerPage
+from fastapi import FastAPI, Request #ajout request
+from app.templates.camembert import creerPage
 import sqlite3
+#interfaçage
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
 #api météo
 from contextlib import closing
 from urllib.request import urlopen
@@ -11,9 +15,14 @@ import json
 
 app = FastAPI()
 
+app.mount("/static", StaticFiles(directory="public"), name="public") #route crée : http://localhost:8000/public/..
+
+templates = Jinja2Templates(directory="app/templates") #objet va chercher les templates dans le repertoire adequat
+
 @app.get("/")
-async def read_root():
-    return {"Hello": "World"}
+async def root(request: Request):
+    return templates.TemplateResponse(request, "home.html") #templateResponse crée html à partir d'un template
+
 
 
 ############### Meteo concept prévisions à afficher
