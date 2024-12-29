@@ -1,0 +1,42 @@
+body {
+  padding-bottom: 20px;
+}
+
+
+.navbar {
+background-color: var(--bs-success) !important;
+color: var(--bs-info) ;
+font-family: 'Montserrat', sans-serif;
+letter-spacing: 4px;
+opacity: 0.9  ; 
+}
+
+.navbar a.nav-link {
+color: var(--bs-light-bg-subtle) !important;
+}
+
+.navbar a.nav-link:hover {
+color: var(--bs-emphasis-color) !important;
+}
+
+/* Utilisation des variables globales css qui déf les caractéristiques changeables du bouton */
+.btn-primary-navbar {
+  --bd-violet-bg:var(--bs-success-border-subtle);
+  --bd-violet-rgb: 112.520718, 44.062154, 249.437846;
+
+  --bs-btn-font-weight: 600;
+  --bs-btn-color: var(--bs-dark);
+  /* NON FONCTIONNEL -> POURQUOI ?? */
+  --bs-btn-font-family: 'Montserrat', sans-serif !important;
+  --bs-btn-bg: var(--bd-violet-bg);
+  --bs-btn-border-color: var(--bd-violet-bg);
+  --bs-btn-hover-color: var(--bs-black);
+  --bs-btn-hover-bg: var(--bs-primary-border-subtle);
+  --bs-btn-hover-border-color:var(--bs-primary-border-subtle);
+  --bs-btn-focus-shadow-rgb: var(--bd-violet-rgb);
+  --bs-btn-active-color: var(--bs-btn-hover-color);
+  --bs-btn-active-bg: var(--bs-primary-border-subtle);
+  --bs-btn-active-border-color: #5a23c8;
+}
+
+
