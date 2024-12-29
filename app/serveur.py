@@ -15,7 +15,7 @@ import json
 
 app = FastAPI()
 
-app.mount("/static", StaticFiles(directory="public"), name="public") #route crée : http://localhost:8000/public/..
+app.mount("/static", StaticFiles(directory="static"), name="static") #route crée : http://localhost:8000/public/..
 
 templates = Jinja2Templates(directory="app/templates") #objet va chercher les templates dans le repertoire adequat
 
