@@ -1,16 +1,20 @@
 from typing import Union
 from fastapi import FastAPI, Request #ajout request
-from app.templates.camembert import creerPage
+# from app.templates.camembert import creerPage
 import sqlite3
 #interfaçage
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi import Request
 
 #api météo
 from contextlib import closing
 from urllib.request import urlopen
 import dateutil.parser
 import json
+import os.path
+
+
 
 
 app = FastAPI()
@@ -19,9 +23,13 @@ app.mount("/static", StaticFiles(directory="static"), name="static") #route cré
 
 templates = Jinja2Templates(directory="app/templates") #objet va chercher les templates dans le repertoire adequat
 
+# @app.on_event("startup")
+# async def startup():
+#     await remplissage()
+
 @app.get("/")
 async def root(request: Request):
-    return templates.TemplateResponse(request, "home.html") #templateResponse crée html à partir d'un template
+    return templates.TemplateResponse("home.html",{'request':request}) #templateResponse crée html à partir d'un template
 
 
 
@@ -67,10 +75,10 @@ async def affichageMeteoCommune(ville : str, cp : int):
 
 ################# Affichage Google Chart
 @app.get("/syntheseCamembert")
-async def syntheseCamembert(): #prend en paramètres des factures
+async def syntheseCamembert(request : Request): #prend en paramètres des factures
     conn = sqlite3.connect("logement.db") 
     cursor = conn.cursor() 
-    res = cursor.execute("SELECT type_fact, montant FROM Facture") #interroge la base de donnée
+    res = cursor.execute("SELECT type_fact, montant FROM Facture;") #interroge la base de donnée
     res = res.fetchall()
     conn.close()
       
@@ -86,10 +94,19 @@ async def syntheseCamembert(): #prend en paramètres des factures
             copro = i[1]
         else :
             autres += i[1]
+    # Création html libre sans interface
     liste = [["Type de Facture", "Montant"],["électricité", elec], ["eau", eau], ["déchets", dechets], ["copropriété", copro]] # Liste imbriquée avec type_fact et montant
-    creerPage(liste) 
-           
+    creerPage(liste)
     return {"message": "Données générées pour Google Charts", "données": liste}
+
+    # Création graph dans interface
+    # return templates.TemplateResponse("./consommation.html", {
+    #     "request": request,
+    #     "électricité": elec,
+    #     "eau": eau,
+    #     "déchets": dechets,
+    #     "copropriété": copro,
+    # })
 
 
 ################## LOGEMENT 
