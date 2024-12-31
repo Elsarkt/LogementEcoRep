@@ -18,6 +18,11 @@ import os.path
 from datetime import datetime
 import random
 
+#configuration : création capteur
+from fastapi import Form
+from fastapi.responses import JSONResponse
+
+
 app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="static"), name="static") #route crée : http://localhost:8000/public/..
@@ -28,17 +33,33 @@ templates = Jinja2Templates(directory="app/templates") #objet va chercher les te
 # async def startup():
 #     await remplissage()
 
+def dict_factory(cursor, row): 
+    return {col[0]: row[idx] for idx, col in enumerate(cursor.description)}
+
 @app.get("/")
 async def root(request: Request):
     return templates.TemplateResponse("home.html",{'request':request}) #templateResponse crée html à partir d'un template
 
 
-
 ############### Meteo concept prévisions à afficher
-@app.get("/getMeteoVille")
-async def affichageMeteoCommune(ville : str, cp : int):
+#get cp ville
+# @app.get("/getCPville") 
+# async def getCPville(request:Request):
+#     return templates.TemplateResponse("tempsreel.html",{'request':request}) #templateResponse crée html à partir d'un template
+
+# async def creerCapteurActioForm( request: Request, ref_commerce: str = Form(...),ref_piece: str = Form(...),port_comm: int = Form(...),idType: int = Form(...),idPiece: int = Form(...)):
+
+@app.post("/affichageMeteoCommune")
+async def affichageMeteoCommune(request : Request, ville : str = Form(...), cp : int = Form(...)):
     MON_TOKEN = '04965bbbfb6fadabdd3e79edb27b21b78af295d90014db1c99c4b40cf9af5504'
     insee_code = 0
+
+    conn = sqlite3.connect("./app/logement.db")
+    conn.row_factory = dict_factory
+    cursor = conn.cursor()
+    res = cursor.execute("SELECT id, ref_commerce, ref_piece, date_insertion, port_comm, idType, idPiece FROM Capteur_actio")
+    res = res.fetchall()
+    conn.close()
 
     with closing(urlopen('https://api.meteo-concept.com/api/location/cities?token={}&search={}'.format(MON_TOKEN, ville))) as f:
         cities = json.loads(f.read())['cities']
@@ -53,24 +74,25 @@ async def affichageMeteoCommune(ville : str, cp : int):
                 found = True
                 break        
         if not found : 
-            return {"Message" : "Ville non trouvée"}
+            return templates.TemplateResponse("tempsreel.html", {'request': request, "erreur": "Ville non trouvée"})
 
         else : 
             with closing(urlopen('https://api.meteo-concept.com/api/forecast/daily?token={}&insee={}'.format(MON_TOKEN, insee_code))) as f: #mon_token sera-il bien remplacé ?
                 decoded = json.loads(f.read()) #conversion JSON en dictionnaire : city={'name'=...} forecast={..........}
                 (city,forecast) = (decoded[k] for k in ('city','forecast')) # ({name="",...},{update="",...}) tuple de deux dictionnaires
-                previsions = {}
+                previsions=[]
                 #print("Ville de {}".format(city['name']))
                 jour = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
                 for i ,f in enumerate(forecast): # forecast[0], forecast[1],...
-                    indiceDay = dateutil.parser.parse(f['datetime']).weekday() # Lundi : 0, Mardi : 1, etc.
+                    indiceDay = dateutil.parser.parse(f['datetime']).weekday() # Lundi : 0, Mardi : 1, etc. 
                     #print(u"{} : Température minimum : {}°C, Température maximale : {}°C, Précipitations : {}mm\n".format(jour[indiceDay], f['tmin'], f['tmax'], f['rr10']))
-                    previsions[jour[indiceDay]] = {"Température minimum":f['tmin'], "Température maximale" : f['tmax'], "Précipitations" : f['rr10']}
+                    previsions.append({"jour":jour[indiceDay], "temp_min":f['tmin'], "temp_max" : f['tmax'], "precipitations" : f['rr10']})
                     if i ==  5 : 
                         break
                     
-            return {"Ville" : city['name'], "Prévisions" : previsions }
-
+            # return {"Ville" : city['name'], "Prévisions" : previsions }
+            return templates.TemplateResponse("tempsreel.html",{'request':request, "Ville": decoded['city']['name'],"previsions":previsions, "res":res}) #templateResponse crée html à partir d'un template
+            
     return {"Message" : "Requête à meteo concept non envoyée"}
 
 
@@ -103,8 +125,8 @@ async def syntheseCamembert(request : Request, periode : str): #prend en paramè
 
     
 ################# Affichage Graphe conso
-@app.get("/graphe")
-async def grpaheConso(request : Request, periode : str, asked: str): #prend en paramètres des factures
+@app.get("/grapheConso")
+async def grapheConso(request : Request, periode : str, asked: str): #prend en paramètres des factures
     conn = sqlite3.connect("./app/logement.db") 
     cursor = conn.cursor() 
     #disjonction de cas conso ou eco 
@@ -359,6 +381,17 @@ async def getPiece_idLogement(idLogement: int):
     return {"res": res}
 
 ################## CAPTEUR_ACTIO
+@app.get("/getCapteurs")
+async def getCapteurs(request:Request):
+    conn = sqlite3.connect("./app/logement.db")
+    conn.row_factory = dict_factory
+    cursor = conn.cursor()
+    res = cursor.execute("SELECT id, ref_commerce, ref_piece, date_insertion, port_comm, idType, idPiece FROM Capteur_actio")
+    res = res.fetchall()
+    conn.close()
+    return templates.TemplateResponse("./tempsreel.html", {"request": request, "res":res})
+
+
 @app.post("/creerCapteurActio")
 async def creerCapteurActio(ref_commerce: str, ref_piece: str, port_comm: int, idType: int, idPiece: int):
     conn = sqlite3.connect("./app/logement.db")
@@ -377,11 +410,43 @@ async def creerCapteurActio(ref_commerce: str, ref_piece: str, port_comm: int, i
     conn.close()
     return {"message": "capteur/actionneur créé", "id_capteur": capteur[0], "ref_commerce": capteur[1], "ref_piece": capteur[2], "date_insertion": capteur[3], "port_comm": capteur[4], "idType": capteur[5], "idPiece": capteur[6]}
 
-@app.get("/getCapteurActio/idPiece")
-async def getCapteurActio_idPiece(idPiece: int):
+
+# Créer capteur VIA FORM
+@app.get("/getCapteurActiForm")
+async def getCapteurActioForm(request: Request):
+    return templates.TemplateResponse("configurations.html", {"request": request})
+
+@app.post("/creerCapteurActioForm")
+# nom des param identiques à ceux dans le html : name=""
+async def creerCapteurActioForm( request: Request, ref_commerce: str = Form(...),ref_piece: str = Form(...),port_comm: int = Form(...),idType: int = Form(...),idPiece: int = Form(...)):
+    print("Dans creerCapteurActioForm")
+    conn = sqlite3.connect("./app/logement.db")
+    print("Dans conexion sqlite")
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO Capteur_actio (ref_commerce, ref_piece, port_comm, idType, idPiece) VALUES (?, ?, ?, ?, ?)",
+        (ref_commerce, ref_piece, port_comm, idType, idPiece)
+    )
+    conn.commit()
+    print("Après insert into")
+    id_capteur = cursor.lastrowid
+    res = cursor.execute("SELECT id, ref_commerce, ref_piece, date_insertion, port_comm, idType, idPiece FROM Capteur_actio WHERE id = ?", (id_capteur,))
+    capteur = res.fetchone()
+    if capteur is None:
+        conn.close()
+        return {"Erreur": "Le capteur/actionneur n'a pas été trouvé dans la base de données après l'insertion"}
+
+    conn.close()
+    # return {"message": "capteur/actionneur créé", "id_capteur": capteur[0], "ref_commerce": capteur[1], "ref_piece": capteur[2], "date_insertion": capteur[3], "port_comm": capteur[4], "idType": capteur[5], "idPiece": capteur[6]}
+    # return JSONResponse(content={"message": "Capteur/actionneur créé avec succès"})
+    return templates.TemplateResponse("configurations.html", {"request": request})
+
+
+@app.get("/getCapteurActio/idCapteur")
+async def getCapteurActio_idCapteur(idCapteur: int):
     conn = sqlite3.connect("./app/logement.db")
     cursor = conn.cursor()
-    res = cursor.execute("SELECT * FROM Capteur_actio WHERE idPiece = ?", (idPiece,))
+    res = cursor.execute("SELECT * FROM Capteur_actio WHERE id = ?", (idCapteur,))
     res = res.fetchall()
     conn.close()
     return {"res": res}
@@ -440,27 +505,3 @@ async def getMesure_idCapteur(idCapteur: int):
     conn.close()
     return {"res": res}
 
-
-
-
-
-
-
-
-
-# @app.post("/Logement")
-# async def creerLogementFin(adresse : str, telephone : int):
-#  logement_id = creerLogement(adresse,telephone)
-#  return {"id": logement_id, **logement.dict()}
-
-
-
-
-
-# @app.get("/Piece/{id}")
-
-# @app.get("/Capteur_actio/{id}")
-
-# @app.get("/Type_capteur_actio/{id}")
-
-# @app.get("/Mesure/{id}")

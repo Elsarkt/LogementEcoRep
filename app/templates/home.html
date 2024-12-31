@@ -7,7 +7,7 @@
     <meta name="description" content="">
     <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
     <meta name="generator" content="Hugo 0.122.0">
-    <title>Page d'accueil</title>
+    <title>Ecorep accueil</title>
     <!-- Utilisation du CDN pour ne pas avoir à utiliser les fichiers précompilés locaux à l'ordi -->
     <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/navbars/">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
@@ -33,28 +33,23 @@
           </button>
 
           <div class="collapse navbar-collapse d-lg-flex" id="navbarsExample11">
-            <a class="navbar-brand col-lg-3 me-0" href="#">ECOREP</a>
+            <a class="navbar-brand col-lg-3 me-0">ECOREP</a>
             <ul class="navbar-nav col-lg-6 justify-content-lg-center">
               <li class="nav-item">
-                <a class="nav-link active" aria-current="page" href="#">Accueil</a>
+                <a class="nav-link active" aria-current="page" href="/">Accueil</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="#">Consommation</a>
+                <a class="nav-link" href="/grapheConso?periode=an&asked=conso">Consommation</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link">Economie</a>
+                <a class="nav-link" href="/grapheConso?periode=an&asked=eco">Economie</a>
               </li>
-              <!-- <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false">Configurations</a>
-                <ul class="dropdown-menu">
-                  <li><a class="dropdown-item" href="#">Ajout capteur</a></li>
-                  <li><a class="dropdown-item" href="#">Ajout commande</a></li>
-                  <li><a class="dropdown-item" href="#">Something else here</a></li>
-                </ul>
-              </li> -->
+              <li class="nav-item">
+                <a class="nav-link" href="/getCapteurs">Temps réel</a>
+              </li>
             </ul>
             <div class="d-lg-flex col-lg-3 justify-content-lg-end">
-              <button class="btn btn-primary-navbar">Configurations</button>
+              <button class="btn btn-primary-navbar" onclick="window.location.href='/getCapteurActiForm'">Configurations</button>
             </div>
           </div>
         </div>
@@ -77,7 +72,7 @@
                   <h1>Logement ECOREP</h1>
                   <h1>Economiser des ressources...</h1>
                   <!-- <p class="opacity-75">Economiser des ressources...</p> -->
-                  <p><a class="btn btn-lg btn-primary" href="#">Mon bilan conso</a></p>
+                  <p><a class="btn btn-lg btn-primary" href="/grapheConso?periode=an&asked=conso">Mon bilan conso</a></p>
                 </div>
               </div>
             </div>
@@ -87,7 +82,7 @@
               <div class="carousel-caption">
                 <!-- <h1>Another example headline.</h1> -->
                 <h1>...et de l'argent</h1>
-                <p><a class="btn btn-lg btn-primary" href="#">Mes économies</a></p>
+                <p><a class="btn btn-lg btn-primary" href="grapheConso?periode=an&asked=eco">Mes économies</a></p>
               </div>
             </div>
           </div>
@@ -97,7 +92,7 @@
               <div class="carousel-caption text-end">
                 <h1>Prévoyer le réglage de vos capteurs en fonction de la température extérieure</h1>
                 <!-- <p>Prévoyer vos réglages de capteurs en fonction de la météo</p> -->
-                <p><a class="btn btn-lg btn-primary" href="#">La météo de ma ville</a></p>
+                <p><a class="btn btn-lg btn-primary" href="/getCapteurs">La météo de ma ville</a></p>
               </div>
             </div>
           </div>

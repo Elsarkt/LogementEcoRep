@@ -7,7 +7,7 @@
     <meta name="description" content="">
     <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
     <meta name="generator" content="Hugo 0.122.0">
-    <title>Ecorep économie</title>
+    <title>Ecorep Temps réel</title>
 
     <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/dashboard/">
 
@@ -33,8 +33,8 @@
   </head>
 
   <body>
-      <!-- Navbar -->
-      <nav class="navbar navbar-expand-lg " aria-label="Thirteenth navbar example"> <!--navbar-expand-lg -> navbar Responsive-->
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg " aria-label="Thirteenth navbar example"> <!--navbar-expand-lg -> navbar Responsive-->
       <div class="container-fluid">
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsExample11" aria-controls="navbarsExample11" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
@@ -66,47 +66,76 @@
     <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
       <!-- Titre page -->
       <!-- <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"> -->
-        <h1 class="h2 ">Economies</h1>
-        <h2 class="h3 ">Retrouvez les économies globales réalisées annuellement et mensuellement</h2>
-        <div class="btn-toolbar mb-2 mb-md-0">
-        <!-- </div> -->
-        </div>
-
-      <!-- bouton changement d'échelle -->
-      <div class="btn-group">
-        <a href="grapheConso?periode=an&asked=eco" class="btn btn-outline-success active" aria-current="Basic outlined example">Sur un an</a>
-        <a href="grapheConso?periode=deuxAns&asked=eco" class="btn btn-outline-success ">Sur deux ans</a>
+      <h1 class="h2 ">Temps réel</h1>
+      <h2 class="h3 ">Consultez l'état de vos capteurs</h2>
+      <div class="btn-toolbar mb-2 mb-md-0">
       </div>
 
-      <!-- données à afficher -->
-      <!-- tojson|valide -> json valide injecté dan le html -->
-      <!-- Utilisation zttribut "data-* utile dans document.getElementbyId.dataset" -->
-      <div id="charts-data-labels_eco" data-labels='{{ labels|tojson|safe }}' style="display:none;"></div>
-      <div id="charts-data-consoelec_eco" data-consoelec='{{ consoElec|tojson|safe }}' style="display:none;"></div>
-      <div id="charts-data-consoeau_eco" data-consoeau='{{ consoEau|tojson|safe }}' style="display:none;"></div>
-      <div id="charts-data-consodechets_eco" data-consodechets='{{ consoDechets|tojson|safe }}' style="display:none;"></div>
-      <div id="charts-data-consocopro_eco" data-consocopro='{{ consoCopro|tojson|safe }}' style="display:none;"></div>
-      
-      <div id="charts-data-ecoelec" data-ecoelec='{{ ecoElec|tojson|safe }}' style="display:none;"></div>
-      <div id="charts-data-ecoconsoeau" data-ecoeau='{{ ecoEau|tojson|safe }}' style="display:none;"></div>
-      <div id="charts-data-ecoconsodechets" data-ecodechets='{{ ecoDechets|tojson|safe }}' style="display:none;"></div>
-      <div id="charts-data-ecoconsocopro" data-ecocopro='{{ ecoCopro|tojson|safe }}' style="display:none;"></div>
-      
-      <!-- canva affichage des graphs -->
-      <div class="d-flex flex-column">
-        <div class="canvas-container">
-          <canvas class="my-4" id="chartElec_eco"></canvas>
-        </div>
-        <div class="canvas-container">
-          <canvas class="my-4" id="chartEau_eco"></canvas>
-        </div>
-        <div class="canvas-container">
-          <canvas class="my-4" id="chartDechets_eco"></canvas>
-        </div>
-        <div class="canvas-container">
-          <canvas class="my-4" id="chartCopro_eco"></canvas>
-        </div>
-      </div>
+        <!--Table capteurs  -->
+      <table class="table table-success table-striped" >
+        <thead>
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Ref Commerce</th>
+            <th scope="col">Ref Piece</th>
+            <th scope="col">Date Insertion</th>
+            <th scope="col">Port Comm</th>
+            <th scope="col">ID Type</th>
+            <th scope="col">ID Piece</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for capt in res %}
+          <tr>
+            <td>{{capt.id }}</td>
+            <td>{{capt.ref_commerce }}</td>
+            <td>{{ capt.ref_piece }}</td>
+            <td>{{capt.date_insertion }}</td>
+            <td>{{capt.port_comm }}</td>
+            <td>{{capt.idType }}</td>
+            <td>{{capt.idPiece }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <h2 class="h3 ">Consultez la météo de vos villes pour prévoir la configuration de vos capteurs</h2>
+
+      <form action="/affichageMeteoCommune" method="post">
+        <label for="ville">Ville:</label><br>
+        <input type="text" id="ville" name="ville"><br>
+        
+        <label for="Code Postal">Code Postal:</label><br>
+        <input type="text" id="cp" name="cp"><br>
+
+        <input type="submit" value="Rechercher">
+      </form>
+
+      {%if previsions!=NULL%}
+
+        <!-- Weather Forecast Table -->
+        <h2 class="h3 ">Prévisions Météo pour {{Ville }}</h2>
+        <table class="table table-success table-striped">
+          <thead>
+            <tr>
+              <th scope="col">Jour</th>
+              <th scope="col">Température Min (°C)</th>
+              <th scope="col">Température Max (°C)</th>
+              <th scope="col">Précipitations (mm)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for prevision in previsions %}
+            <tr>
+              <td>{{prevision.jour }}</td>
+              <td>{{prevision.temp_min }}</td>
+              <td>{{prevision.temp_max }}</td>
+              <td>{{prevision.precipitations }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {%endif%}
       
       <!-- Footer, pied de page -->
       <footer class="container">
@@ -119,6 +148,5 @@
 <!-- <script src="../assets/dist/js/bootstrap.bundle.min.js"></script> -->
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.2/dist/chart.umd.js" integrity="sha384-eI7PSr3L1XLISH8JdDII5YN/njoSsxfbrkCTnJrzXt+ENP5MOVBxD+l6sEG4zoLp" crossorigin="anonymous"></script>
-    <script src="../static/dashboardEco.js"></script>
   </body>
 </html>

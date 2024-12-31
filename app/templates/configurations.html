@@ -7,7 +7,7 @@
     <meta name="description" content="">
     <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
     <meta name="generator" content="Hugo 0.122.0">
-    <title>Ecorep consommation</title>
+    <title>Ecorep configurations</title>
 
     <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/dashboard/">
 
@@ -66,42 +66,30 @@
     <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
       <!-- Titre page -->
       <!-- <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"> -->
-        <h1 class="h2 ">Consommations</h1>
-        <h2 class="h3 ">Retrouvez les consommations globales annuelles et mensuelles</h2>
-        <div class="btn-toolbar mb-2 mb-md-0">
-        <!-- </div> -->
-        </div>
-
-      <!-- bouton changement d'échelle -->
-      <div class="btn-group">
-        <a href="grapheConso?periode=an&asked=conso" class="btn btn-outline-success active" aria-current="Basic outlined example">Sur un an</a>
-        <a href="grapheConso?periode=deuxAns&asked=conso" class="btn btn-outline-success ">Sur deux ans</a>
+      <h1 class="h2 ">Configurations</h1>
+      <h2 class="h3 ">Ajouter vos capteurs</h2>
+      <div class="btn-toolbar mb-2 mb-md-0">
       </div>
 
-      <!-- données à afficher -->
-      <!-- tojson|valide -> json valide injecté dan le html -->
-      <!-- Utilisation zttribut "data-* utile dans document.getElementbyId.dataset" -->
-      <div id="charts-data-labels" data-labels='{{ labels|tojson|safe }}' style="display:none;"></div>
-      <div id="charts-data-consoelec" data-consoelec='{{ consoElec|tojson|safe }}' style="display:none;"></div>
-      <div id="charts-data-consoeau" data-consoeau='{{ consoEau|tojson|safe }}' style="display:none;"></div>
-      <div id="charts-data-consodechets" data-consodechets='{{ consoDechets|tojson|safe }}' style="display:none;"></div>
-      <div id="charts-data-consocopro" data-consocopro='{{ consoCopro|tojson|safe }}' style="display:none;"></div>
-      
-      <!-- canva affichage des graphs -->
-      <div class="d-flex flex-column">
-        <div class="canvas-container">
-          <canvas class="my-4" id="chartElec"></canvas>
-        </div>
-        <div class="canvas-container">
-          <canvas class="my-4" id="chartEau"></canvas>
-        </div>
-        <div class="canvas-container">
-          <canvas class="my-4" id="chartDechets"></canvas>
-        </div>
-        <div class="canvas-container">
-          <canvas class="my-4" id="chartCopro"></canvas>
-        </div>
-      </div>
+      <!-- code deepseek -->
+      <form action="/creerCapteurActioForm" method="post">
+        <label for="ref_commerce">Ref Commerce:</label><br>
+        <input type="text" id="ref_commerce" name="ref_commerce"><br>
+        
+        <label for="ref_piece">Ref Piece:</label><br>
+        <input type="text" id="ref_piece" name="ref_piece"><br>
+        
+        <label for="port_comm">Port Communication:</label><br>
+        <input type="number" id="port_comm" name="port_comm"><br>
+        
+        <label for="idType">ID Type:</label><br>
+        <input type="number" id="idType" name="idType"><br>
+        
+        <label for="idPiece">ID Piece:</label><br>
+        <input type="number" id="idPiece" name="idPiece"><br><br>
+        
+        <input type="submit" value="Create">
+    </form>
       
       <!-- Footer, pied de page -->
       <footer class="container">
@@ -114,6 +102,5 @@
 <!-- <script src="../assets/dist/js/bootstrap.bundle.min.js"></script> -->
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.2/dist/chart.umd.js" integrity="sha384-eI7PSr3L1XLISH8JdDII5YN/njoSsxfbrkCTnJrzXt+ENP5MOVBxD+l6sEG4zoLp" crossorigin="anonymous"></script>
-    <script src="../static/dashboard.js"></script>
   </body>
 </html>
