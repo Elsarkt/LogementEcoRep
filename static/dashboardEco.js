@@ -8,10 +8,10 @@
   const consoDechets = JSON.parse(document.getElementById('charts-data-consodechets_eco').dataset.consodechets);
   const consoCopro = JSON.parse(document.getElementById('charts-data-consocopro_eco').dataset.consocopro);
 
-  const ecoElec = JSON.parse(document.getElementById('charts-data-ecoelec').dataset.consoelec);
-  const ecoEau = JSON.parse(document.getElementById('charts-data-ecoconsoeau').dataset.consoeau);
-  const ecoDechets = JSON.parse(document.getElementById('charts-data-ecoconsodechets').dataset.consodechets);
-  const ecoCopro = JSON.parse(document.getElementById('charts-data-ecoconsocopro').dataset.consocopro);
+  const ecoElec = JSON.parse(document.getElementById('charts-data-ecoelec').dataset.ecoelec);
+  const ecoEau = JSON.parse(document.getElementById('charts-data-ecoconsoeau').dataset.ecoeau);
+  const ecoDechets = JSON.parse(document.getElementById('charts-data-ecoconsodechets').dataset.ecodechets);
+  const ecoCopro = JSON.parse(document.getElementById('charts-data-ecoconsocopro').dataset.ecocopro);
 
   console.log({ labels, consoElec, consoEau, consoDechets, consoCopro, ecoElec, ecoEau, ecoDechets, ecoCopro });
   // const ctx = document.getElementById('myChart')

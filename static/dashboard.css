@@ -1,14 +1,14 @@
-.bi {
+/* .bi {
   display: inline-block;
   width: 1rem;
   height: 1rem;
-}
+} */
 
 /*
  * Sidebar
  */
 
-@media (min-width: 768px) {
+/* @media (min-width: 768px) {
   .sidebar .offcanvas-lg {
     position: -webkit-sticky;
     position: sticky;
@@ -17,9 +17,9 @@
   .navbar-search {
     display: block;
   }
-}
+} */
 
-.sidebar .nav-link {
+/* .sidebar .nav-link {
   font-size: .875rem;
   font-weight: 500;
 }
@@ -30,13 +30,13 @@
 
 .sidebar-heading {
   font-size: .75rem;
-}
+} */
 
 /*
  * Navbar
  */
 
-.navbar-brand {
+/* .navbar-brand {
   padding-top: .75rem;
   padding-bottom: .75rem;
   background-color: rgba(0, 0, 0, .25);
@@ -45,4 +45,18 @@
 
 .navbar .form-control {
   padding: .75rem 1rem;
+} */
+
+
+
+
+.canvas-container {
+  width: 100%;            /* S'assurer que le conteneur utilise toute la largeur */
+  max-width: 800px;       /* Facultatif : limiter la largeur maximale */
+  margin: 20px 0;         /* Ajouter un espacement vertical uniquement */
+}
+
+canvas {
+  width: 100%;            /* Le graphe prend toute la largeur disponible */
+  height: auto;           /* Respecte le ratio d'aspect */
 }

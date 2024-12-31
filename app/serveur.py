@@ -154,7 +154,7 @@ async def grpaheConso(request : Request, periode : str, asked: str): #prend en p
 
                 ecoElec[i] = int(consoElec[i]*augmentation)
                 ecoEau[i] = int(consoEau[i]*augmentation)
-                ecoDechets[i] = int(consoEau[i]*augmentation)
+                ecoDechets[i] = int(consoDechets[i]*augmentation)
                 ecoCopro[i] = int(consoCopro[i]*augmentation)
             
             #retourne pour chaque type de facture le montant et du montant qui auraient été sans ecorep
@@ -201,10 +201,8 @@ async def grpaheConso(request : Request, periode : str, asked: str): #prend en p
 
                 ecoElec[i] = int(consoElec[i]*augmentation)
                 ecoEau[i] = int(consoEau[i]*augmentation)
-                ecoDechets[i] = int(consoEau[i]*augmentation)
+                ecoDechets[i] = int(consoDechets[i]*augmentation)
                 ecoCopro[i] = int(consoCopro[i]*augmentation)
-                print( ecoCopro[i])
-                print(consoEau[i])
 
             #retourne pour chaque type de facture le montant et du montant qui auraient été sans ecorep
             return templates.TemplateResponse("./eco.html", {"request": request, "consoElec":consoElec, "consoEau":consoEau, "consoDechets":consoDechets, "consoCopro":consoCopro, "labels":annee,"ecoElec":ecoElec, "ecoEau":ecoEau, "ecoDechets":ecoDechets, "ecoCopro":ecoCopro})
