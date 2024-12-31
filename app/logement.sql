@@ -12,7 +12,7 @@ DROP TABLE IF EXISTS Mesure;
 -- commandes de creation des tables
 --Dans les commentaires associés, bien préciser le rôle de chaque table et champ.
 CREATE TABLE Logement (ip INTEGER PRIMARY KEY AUTOINCREMENT, adresse TEXT NOT NULL, date_insertion TIMESTAMP DEFAULT CURRENT_TIMESTAMP, telephone TEXT NOT NULL); 
-CREATE TABLE Facture (id INTEGER PRIMARY KEY AUTOINCREMENT, montant INTEGER, date_fact TIMESTAMP DEFAULT CURRENT_TIMESTAMP, type_fact TEXT NOT NULL, conso TEXT NOT NULL, idLogement INTEGER NOT NULL, FOREIGN KEY (idLogement) REFERENCES Logement(ip));--changer montant en float
+CREATE TABLE Facture (id INTEGER PRIMARY KEY AUTOINCREMENT, montant INTEGER, date_fact TIMESTAMP DEFAULT CURRENT_TIMESTAMP, type_fact TEXT NOT NULL, conso INTEGER, unite TEXT NOT NULL, idLogement INTEGER NOT NULL, FOREIGN KEY (idLogement) REFERENCES Logement(ip));--changer montant en float
 CREATE TABLE Piece (id INTEGER PRIMARY KEY AUTOINCREMENT, nom TEXT NOT NULL, coordx INTEGER, coordy INTEGER, coordz INTEGER, idLogement INTEGER NOT NULL, FOREIGN KEY (idLogement) REFERENCES Logement(ip)); --Matrice à trois dimensions?
 CREATE TABLE Capteur_actio (id INTEGER PRIMARY KEY AUTOINCREMENT, ref_commerce  TEXT NOT NULL, ref_piece TEXT NOT NULL, date_insertion TIMESTAMP DEFAULT CURRENT_TIMESTAMP, port_comm INTEGER, idType INTEGER NOT NULL, idPiece INTEGER NOT NULL, FOREIGN KEY (idType) REFERENCES Type_capteur_actio(id),  FOREIGN KEY (idPiece) REFERENCES Piece(id)); -- port_com integer ?/syntaxe foreign 
 CREATE TABLE Type_capteur_actio (id INTEGER PRIMARY KEY AUTOINCREMENT, unite TEXT NOT NULL, val_min INTEGER, val_max INTEGER);
@@ -52,11 +52,11 @@ INSERT INTO Mesure(valeur, idCapteur) VALUES
 ;
 
 --Création factures : chaque facture pour la catégorie considérée est mensuelle
-INSERT INTO Facture(montant, type_fact, conso, idLogement) VALUES
-    (40,'électricité', '200kWh',1),
-    (30, 'eau', '4000 L/mois',1), 
-    (15, 'déchets', '30 kg',1),
-    (100, 'entretienCopropiété', '4h',1)
+INSERT INTO Facture(montant, type_fact, conso, unite, idLogement) VALUES
+    (40,'électricité', 200,'kWh',1),
+    (30, 'eau', 4000, 'L/mois',1), 
+    (15, 'déchets', 30,'kg',1),
+    (100, 'copropriété', 4,'heures',1)
 ;
 
 

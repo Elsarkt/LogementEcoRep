@@ -14,8 +14,9 @@ import dateutil.parser
 import json
 import os.path
 
-
-
+#graphe
+from datetime import datetime
+import random
 
 app = FastAPI()
 
@@ -75,10 +76,10 @@ async def affichageMeteoCommune(ville : str, cp : int):
 
 ################# Affichage Google Chart
 @app.get("/syntheseCamembert")
-async def syntheseCamembert(request : Request): #prend en paramètres des factures
-    conn = sqlite3.connect("logement.db") 
+async def syntheseCamembert(request : Request, periode : str): #prend en paramètres des factures
+    conn = sqlite3.connect("./app/logement.db") 
     cursor = conn.cursor() 
-    res = cursor.execute("SELECT type_fact, montant FROM Facture;") #interroge la base de donnée
+    res = cursor.execute("SELECT type_fact, montant, date_fact  FROM Facture;") #interroge la base de donnée
     res = res.fetchall()
     conn.close()
       
@@ -94,25 +95,128 @@ async def syntheseCamembert(request : Request): #prend en paramètres des factur
             copro = i[1]
         else :
             autres += i[1]
+
     # Création html libre sans interface
     liste = [["Type de Facture", "Montant"],["électricité", elec], ["eau", eau], ["déchets", dechets], ["copropriété", copro]] # Liste imbriquée avec type_fact et montant
     creerPage(liste)
     return {"message": "Données générées pour Google Charts", "données": liste}
 
-    # Création graph dans interface
-    # return templates.TemplateResponse("./consommation.html", {
-    #     "request": request,
-    #     "électricité": elec,
-    #     "eau": eau,
-    #     "déchets": dechets,
-    #     "copropriété": copro,
-    # })
+    
+################# Affichage Graphe conso
+@app.get("/graphe")
+async def grpaheConso(request : Request, periode : str, asked: str): #prend en paramètres des factures
+    conn = sqlite3.connect("./app/logement.db") 
+    cursor = conn.cursor() 
+    #disjonction de cas conso ou eco 
+    if asked == "conso" : #récupération de la conso des facturse
+        res = cursor.execute("SELECT type_fact, conso, date_fact  FROM Facture;") #interroge la base de donnée
+    elif asked == "eco" : #récupération du montant des facturse
+        res = cursor.execute("SELECT type_fact, montant, date_fact  FROM Facture;") #interroge la base de donnée
+    else : 
+        return {"MEssage":"Erreur d'URL"}
+    res = res.fetchall()
+    conn.close()
 
+    #####Echelle de temps : un an, chaque mois
+    #pas de disjonction de cas car on récupère direct le deuxième élément de res, soit "montant" soit "conso" en fct de la précédente disjonciton 
+    if periode == "an" :
+        consoElec = [0]*12
+        consoEau = [0]*12
+        consoDechets = [0]*12
+        consoCopro =[0]*12
+        mois = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
+        for i in res:
+            date_obj = datetime.strptime(i[2], "%Y-%m-%d %H:%M:%S") 
+            if date_obj.year == 2024:
+                moisFacture = date_obj.month-1 #récupéraition du mois de la facture
+                if i[0] == "électricité" :
+                    consoElec[moisFacture] += i[1] 
+                elif i[0] == "eau" : 
+                    consoEau[moisFacture] += i[1] 
+                elif i[0] == "déchets" :
+                    consoDechets[moisFacture] += i[1] 
+                elif i[0] == "copropriété" :
+                    consoCopro[moisFacture] += i[1] 
+                else :
+                    return {"Message":"erreur1", "i[0]":i[0],"moisFacture":moisFacture, "res":res}
+        print(consoElec)
 
+        # Tableaux des éconoomies réalisées pour chaque type de facture
+        if asked == "eco" :
+            ecoElec = [0]*12
+            ecoEau = [0]*12
+            ecoDechets = [0]*12
+            ecoCopro = [0]*12
+
+            for i in range(0,12) : 
+                # pourcentage d'augmentation pour les montnats qui auraient été appliqué sans ecorep
+                augmentation = random.uniform(1.05, 1.20)
+
+                ecoElec[i] = int(consoElec[i]*augmentation)
+                ecoEau[i] = int(consoEau[i]*augmentation)
+                ecoDechets[i] = int(consoEau[i]*augmentation)
+                ecoCopro[i] = int(consoCopro[i]*augmentation)
+            
+            #retourne pour chaque type de facture le montant et du montant qui auraient été sans ecorep
+            return templates.TemplateResponse("./eco.html", {"request": request, "consoElec":consoElec, "consoEau":consoEau, "consoDechets":consoDechets, "consoCopro":consoCopro, "labels":mois, "ecoElec":ecoElec, "ecoEau":ecoEau, "ecoDechets":ecoDechets, "ecoCopro":ecoCopro})
+
+        #retourne pour chaque type de facture la de conso
+        return templates.TemplateResponse("./conso.html", {"request": request, "consoElec":consoElec, "consoEau":consoEau, "consoDechets":consoDechets, "consoCopro":consoCopro, "labels":mois})
+        
+    ###Echelle de temps : deux ans, chaque annéé
+    elif periode == "deuxAns":
+        consoElec = [0]*2
+        consoEau = [0]*2
+        consoDechets = [0]*2
+        consoCopro =[0]*2
+        annee = [2023, 2024] 
+        for i in res:
+            date_obj = datetime.strptime(i[2], "%Y-%m-%d %H:%M:%S") 
+            if date_obj.year > 2023 or date_obj.year == 2023: #pas de facture antéirieure à 2023 
+                anFacture = date_obj.year #récupéation de l'annee de la facture
+                print(anFacture)
+                if i[0] == "électricité" :
+                    consoElec[anFacture-2023] += i[1] 
+                elif i[0] == "eau" : 
+                    consoEau[anFacture-2023] += i[1] 
+                elif i[0] == "déchets" :
+                    consoDechets[anFacture-2023] += i[1] 
+                elif i[0] == "copropriété" :
+                    consoCopro[anFacture-2023] += i[1] 
+                else :
+                    print(i)
+                    print(i[0])
+                    return {"Message":"erreur2", "consoElec":consoElec}
+
+        # Tableau  conoomies réalisées pour chaque type de facture
+        if asked == "eco" :
+            ecoElec = [0]*2
+            ecoEau = [0]*2
+            ecoDechets = [0]*2
+            ecoCopro = [0]*2
+
+            for i in range(0,2) : 
+                # pourcentage d'augmentation pour les montnats qui auraient été appliqué sans ecorep
+                augmentation = random.uniform(1.05, 1.20)
+
+                ecoElec[i] = int(consoElec[i]*augmentation)
+                ecoEau[i] = int(consoEau[i]*augmentation)
+                ecoDechets[i] = int(consoEau[i]*augmentation)
+                ecoCopro[i] = int(consoCopro[i]*augmentation)
+                print( ecoCopro[i])
+                print(consoEau[i])
+
+            #retourne pour chaque type de facture le montant et du montant qui auraient été sans ecorep
+            return templates.TemplateResponse("./eco.html", {"request": request, "consoElec":consoElec, "consoEau":consoEau, "consoDechets":consoDechets, "consoCopro":consoCopro, "labels":annee,"ecoElec":ecoElec, "ecoEau":ecoEau, "ecoDechets":ecoDechets, "ecoCopro":ecoCopro})
+        
+        #retourne pour chaque type de facture la de conso
+        return templates.TemplateResponse("./conso.html", {"request": request, "consoElec":consoElec, "consoEau":consoEau, "consoDechets":consoDechets, "consoCopro":consoCopro, "labels":annee})
+
+   
 ################## LOGEMENT 
 @app.post("/creerLogement")
 async def creerLogement(adresse : str, telephone : str):
-    conn = sqlite3.connect("logement.db") #connexion crée avec la db
+    conn = sqlite3.connect("./app/logement.db") #connexion crée avec la db
     cursor = conn.cursor() #curseur crée dans la db
     cursor.execute("INSERT INTO Logement (adresse, telephone) VALUES (?, ?)", (adresse, telephone)) #requête sql à éxecuter
     conn.commit() #envoyer la requête
@@ -130,7 +234,7 @@ async def creerLogement(adresse : str, telephone : str):
  
 @app.get("/getLogement/adresse")
 async def getlogement_adresse(adresse : str) :
-    conn = sqlite3.connect("logement.db") 
+    conn = sqlite3.connect("./app/logement.db") 
     cursor = conn.cursor() 
     res = cursor.execute("SELECT * FROM Logement WHERE adresse = ?",(adresse,) ) #interroge la base de donnée
     res = res.fetchall()
@@ -139,7 +243,7 @@ async def getlogement_adresse(adresse : str) :
     
 @app.get("/getLogement/telephone")
 async def getlogement_telehone(telephone : str) :
-    conn = sqlite3.connect("logement.db") 
+    conn = sqlite3.connect("./app/logement.db") 
     cursor = conn.cursor() 
     res = cursor.execute("SELECT * FROM Logement WHERE telephone = ?",(telephone,) ) #interroge la base de donnée
     res = res.fetchall()
@@ -148,7 +252,7 @@ async def getlogement_telehone(telephone : str) :
 
 @app.get("/getLogement/ip")
 async def getlogement_ip(ip : int) :
-    conn = sqlite3.connect("logement.db") 
+    conn = sqlite3.connect("./app/logement.db") 
     cursor = conn.cursor() 
     res = cursor.execute("SELECT * FROM Logement WHERE ip = ?",(ip,) ) #interroge la base de donnée
     res = res.fetchall()
@@ -157,26 +261,26 @@ async def getlogement_ip(ip : int) :
 
 ####################### Facture
 @app.post("/creerFacture")
-async def creerFacture(montant : int, type_fact : str, conso:str, idLogement : int):
-    conn = sqlite3.connect("logement.db") #connexion crée avec la db
+async def creerFacture(montant : int, type_fact : str, conso:str, unite, idLogement : int):
+    conn = sqlite3.connect("./app/logement.db") #connexion crée avec la db
     cursor = conn.cursor() #curseur crée dans la db
-    cursor.execute("INSERT INTO Facture (montant, type_fact, conso, idLogement) VALUES (?, ?, ?, ?)", (montant, type_fact, conso, idLogement)) #requête sql à éxecuter
+    cursor.execute("INSERT INTO Facture (montant, type_fact, conso, unite, idLogement) VALUES (?, ?, ?, ?, ?)", (montant, type_fact, conso, unite, idLogement)) #requête sql à éxecuter
     conn.commit() #envoyer la requête
     id_facture = cursor.lastrowid 
     
     #  répérer les infos du logement qui vient d'être crée
-    res = cursor.execute("SELECT id, montant, date_fact, type_fact, conso, idLogement FROM Facture WHERE id = ?", (id_facture,))
+    res = cursor.execute("SELECT id, montant, date_fact, type_fact, conso, unite, idLogement FROM Facture WHERE id = ?", (id_facture,))
     facture = res.fetchone() #récupéré les éléments de LA ligne intéréssée sous forme de liste
     if facture is None:
         conn.close()
         return {"Erreur": "La facture n'a pas été trouvé dans la base de données après l'insertion"}
     
     conn.close()
-    return {"message":"facture crée", "id":facture[0], "montant":facture[1], "date_fact":facture[2], "type_fact":facture[3], "conso":facture[4], "idLogement":facture[5]}
+    return {"message":"facture crée", "id":facture[0], "montant":facture[1], "date_fact":facture[2], "type_fact":facture[3], "conso":facture[4], "unite":facture[5], "idLogement":facture[6]}
 
 @app.get("/getFacture/id")
 async def getfacture_id(id : int) :
-    conn = sqlite3.connect("logement.db") 
+    conn = sqlite3.connect("./app/logement.db") 
     cursor = conn.cursor() 
     res = cursor.execute("SELECT * FROM Facture WHERE id = ?",(id,) ) #interroge la base de donnée
     res = res.fetchall()
@@ -185,7 +289,7 @@ async def getfacture_id(id : int) :
 
 @app.get("/getFacture/montant")
 async def getfacture_montant(montant : int) :
-    conn = sqlite3.connect("logement.db") 
+    conn = sqlite3.connect("./app/logement.db") 
     cursor = conn.cursor() 
     res = cursor.execute("SELECT * FROM Facture WHERE montant = ?",(montant,) ) #interroge la base de donnée
     res = res.fetchall()
@@ -194,7 +298,7 @@ async def getfacture_montant(montant : int) :
 
 @app.get("/getFacture/date_fact") #type date_fact ????????
 async def getfacture_date_fact(date_fact : str) :
-    conn = sqlite3.connect("logement.db") 
+    conn = sqlite3.connect("./app/logement.db") 
     cursor = conn.cursor() 
     res = cursor.execute("SELECT * FROM Facture WHERE id = ?",(date_fact,) ) #interroge la base de donnée
     res = res.fetchall()
@@ -203,7 +307,7 @@ async def getfacture_date_fact(date_fact : str) :
 
 @app.get("/getFacture/type_fact")
 async def getfacture_type_fact(type_fact : str) :
-    conn = sqlite3.connect("logement.db") 
+    conn = sqlite3.connect("./app/logement.db") 
     cursor = conn.cursor() 
     res = cursor.execute("SELECT * FROM Facture WHERE type_fact = ?",(type_fact,) ) #interroge la base de donnée
     res = res.fetchall()
@@ -212,7 +316,7 @@ async def getfacture_type_fact(type_fact : str) :
 
 @app.get("/getFacture/conso")
 async def getfacture_conso(conso : str) :
-    conn = sqlite3.connect("logement.db") 
+    conn = sqlite3.connect("./app/logement.db") 
     cursor = conn.cursor() 
     res = cursor.execute("SELECT * FROM Facture WHERE conso = ?",(conso,) ) #interroge la base de donnée
     res = res.fetchall()
@@ -221,7 +325,7 @@ async def getfacture_conso(conso : str) :
 
 @app.get("/getFacture/idLogement")
 async def getfacture_idLogement(idLogement: int) :
-    conn = sqlite3.connect("logement.db") 
+    conn = sqlite3.connect("./app/logement.db") 
     cursor = conn.cursor() 
     res = cursor.execute("SELECT * FROM Facture WHERE idLogement = ?",(idLogement,) ) #interroge la base de donnée
     res = res.fetchall()
@@ -232,7 +336,7 @@ async def getfacture_idLogement(idLogement: int) :
 ################# PIECE
 @app.post("/creerPiece")
 async def creerPiece(nom: str, coordx: int, coordy: int, coordz: int, idLogement: int):
-    conn = sqlite3.connect("logement.db")
+    conn = sqlite3.connect("./app/logement.db")
     cursor = conn.cursor()
     cursor.execute("INSERT INTO Piece (nom, coordx, coordy, coordz, idLogement) VALUES (?, ?, ?, ?, ?)", (nom, coordx, coordy, coordz, idLogement))
     conn.commit()
@@ -249,7 +353,7 @@ async def creerPiece(nom: str, coordx: int, coordy: int, coordz: int, idLogement
 
 @app.get("/getPiece/idLogement") #obtenir les informations des pièces du logement n°idLogment
 async def getPiece_idLogement(idLogement: int):
-    conn = sqlite3.connect("logement.db")
+    conn = sqlite3.connect("./app/logement.db")
     cursor = conn.cursor()
     res = cursor.execute("SELECT * FROM Piece WHERE idLogement = ?", (idLogement,))
     res = res.fetchall()
@@ -259,7 +363,7 @@ async def getPiece_idLogement(idLogement: int):
 ################## CAPTEUR_ACTIO
 @app.post("/creerCapteurActio")
 async def creerCapteurActio(ref_commerce: str, ref_piece: str, port_comm: int, idType: int, idPiece: int):
-    conn = sqlite3.connect("logement.db")
+    conn = sqlite3.connect("./app/logement.db")
     cursor = conn.cursor()
     cursor.execute(
         "INSERT INTO Capteur_actio (ref_commerce, ref_piece, port_comm, idType, idPiece) VALUES (?, ?, ?, ?, ?)",(ref_commerce, ref_piece, port_comm, idType, idPiece))
@@ -277,7 +381,7 @@ async def creerCapteurActio(ref_commerce: str, ref_piece: str, port_comm: int, i
 
 @app.get("/getCapteurActio/idPiece")
 async def getCapteurActio_idPiece(idPiece: int):
-    conn = sqlite3.connect("logement.db")
+    conn = sqlite3.connect("./app/logement.db")
     cursor = conn.cursor()
     res = cursor.execute("SELECT * FROM Capteur_actio WHERE idPiece = ?", (idPiece,))
     res = res.fetchall()
@@ -287,7 +391,7 @@ async def getCapteurActio_idPiece(idPiece: int):
 ################## TYPE_CAPTEUR_ACTIO 
 @app.post("/creerTypeCapteurActio")
 async def creerTypeCapteurActio(unite: str, val_min: int, val_max: int):
-    conn = sqlite3.connect("logement.db")
+    conn = sqlite3.connect("./app/logement.db")
     cursor = conn.cursor()
     cursor.execute("INSERT INTO Type_capteur_actio (unite, val_min, val_max) VALUES (?, ?, ?)",(unite, val_min, val_max))
     conn.commit()
@@ -304,7 +408,7 @@ async def creerTypeCapteurActio(unite: str, val_min: int, val_max: int):
 
 @app.get("/getTypeCapteurActio/id") #obtenir infos du type d'un capteur connaissant son numéro d'id
 async def getTypeCapteurActio_id(id: int):
-    conn = sqlite3.connect("logement.db")
+    conn = sqlite3.connect("./app/logement.db")
     cursor = conn.cursor()
     res = cursor.execute("SELECT * FROM Capteur_actio WHERE idPiece = ?", (id,))
     res = res.fetchall()
@@ -314,7 +418,7 @@ async def getTypeCapteurActio_id(id: int):
 ################## MESURE 
 @app.post("/creerMesure")
 async def creerMesure(valeur: int, idCapteur: int):
-    conn = sqlite3.connect("logement.db")
+    conn = sqlite3.connect("./app/logement.db")
     cursor = conn.cursor()
     cursor.execute("INSERT INTO Mesure (valeur, idCapteur) VALUES (?, ?)",(valeur, idCapteur))
     conn.commit()
@@ -331,7 +435,7 @@ async def creerMesure(valeur: int, idCapteur: int):
 
 @app.get("/getMesure/idCapteur") #Mesure obtenue en fonction du capteur n° idCpateur considéré
 async def getMesure_idCapteur(idCapteur: int):
-    conn = sqlite3.connect("logement.db")
+    conn = sqlite3.connect("./app/logement.db")
     cursor = conn.cursor()
     res = cursor.execute("SELECT * FROM Mesure WHERE idCapteur = ?", (idCapteur,))
     res = res.fetchall()
