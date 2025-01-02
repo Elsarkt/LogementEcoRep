@@ -20,12 +20,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 
-    
+ 
     <!-- Custom styles for this template -->
-    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.min.css" rel="stylesheet"> -->
-    <!-- Custom styles for this template -->
-    <!-- <link href="dashboard.css" rel="stylesheet"> -->
-         <!-- Custom styles for this template -->
     <link href="../static/global.css" rel="stylesheet">
     <link href="../static/navbars.css" rel="stylesheet">
     <link href="../static/buttons.css" rel="stylesheet">
@@ -71,21 +67,18 @@
       <div class="btn-toolbar mb-2 mb-md-0">
       </div>
 
-      <!-- code deepseek -->
+      <!-- deepseek : comment insérer un form permettant de créer un capteur -->
       <form action="/creerCapteurActioForm" method="post">
-        <label for="ref_commerce">Ref Commerce:</label><br>
+        <label for="Nom">Nom:</label><br>
         <input type="text" id="ref_commerce" name="ref_commerce"><br>
         
-        <label for="ref_piece">Ref Piece:</label><br>
-        <input type="text" id="ref_piece" name="ref_piece"><br>
-        
-        <label for="port_comm">Port Communication:</label><br>
+        <label for="port_comm">Port de Communication</label><br>
         <input type="number" id="port_comm" name="port_comm"><br>
         
-        <label for="idType">ID Type:</label><br>
+        <label for="Type">Type: 1=électricité, 2:humidité, 3:Niveau sonore, 4: Distance, 5: actionneur </label><br>
         <input type="number" id="idType" name="idType"><br>
         
-        <label for="idPiece">ID Piece:</label><br>
+        <label for="Loacalisation (pièce)">Localisation (pièce):</label><br>
         <input type="number" id="idPiece" name="idPiece"><br><br>
         
         <input type="submit" value="Create">

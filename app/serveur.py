@@ -42,13 +42,6 @@ async def root(request: Request):
 
 
 ############### Meteo concept prévisions à afficher
-#get cp ville
-# @app.get("/getCPville") 
-# async def getCPville(request:Request):
-#     return templates.TemplateResponse("tempsreel.html",{'request':request}) #templateResponse crée html à partir d'un template
-
-# async def creerCapteurActioForm( request: Request, ref_commerce: str = Form(...),ref_piece: str = Form(...),port_comm: int = Form(...),idType: int = Form(...),idPiece: int = Form(...)):
-
 @app.post("/affichageMeteoCommune")
 async def affichageMeteoCommune(request : Request, ville : str = Form(...), cp : int = Form(...)):
     MON_TOKEN = '04965bbbfb6fadabdd3e79edb27b21b78af295d90014db1c99c4b40cf9af5504'
@@ -57,9 +50,23 @@ async def affichageMeteoCommune(request : Request, ville : str = Form(...), cp :
     conn = sqlite3.connect("./app/logement.db")
     conn.row_factory = dict_factory
     cursor = conn.cursor()
-    res = cursor.execute("SELECT id, ref_commerce, ref_piece, date_insertion, port_comm, idType, idPiece FROM Capteur_actio")
+    res = cursor.execute("SELECT id, ref_commerce, date_insertion, port_comm, idType, idPiece FROM Capteur_actio")
     res = res.fetchall()
-    conn.close()
+    mesures={}
+    unites={}
+
+    for i in res:
+        #recuperation mesure
+        cursor.execute("SELECT valeur FROM Mesure WHERE id = ?", (i['id'],))
+        mesure = cursor.fetchone()
+        mesures[i['id']] = mesure['valeur']
+
+        #recuperation unite
+        cursor.execute("SELECT unite FROM Type_capteur_actio WHERE id = ?", (i['idType'],))
+        unite = cursor.fetchone()
+        unites[i['id']] = unite['unite']
+
+    conn.close()    
 
     with closing(urlopen('https://api.meteo-concept.com/api/location/cities?token={}&search={}'.format(MON_TOKEN, ville))) as f:
         cities = json.loads(f.read())['cities']
@@ -91,7 +98,7 @@ async def affichageMeteoCommune(request : Request, ville : str = Form(...), cp :
                         break
                     
             # return {"Ville" : city['name'], "Prévisions" : previsions }
-            return templates.TemplateResponse("tempsreel.html",{'request':request, "Ville": decoded['city']['name'],"previsions":previsions, "res":res}) #templateResponse crée html à partir d'un template
+            return templates.TemplateResponse("tempsreel.html",{'request':request, "Ville": decoded['city']['name'],"previsions":previsions, "res":res, "mesures":mesures, "unites":unites}) #templateResponse crée html à partir d'un template
             
     return {"Message" : "Requête à meteo concept non envoyée"}
 
@@ -147,8 +154,10 @@ async def grapheConso(request : Request, periode : str, asked: str): #prend en p
         consoDechets = [0]*12
         consoCopro =[0]*12
         mois = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
+        print(res)
         for i in res:
             date_obj = datetime.strptime(i[2], "%Y-%m-%d %H:%M:%S") 
+            print(i[2])
             if date_obj.year == 2024:
                 moisFacture = date_obj.month-1 #récupéraition du mois de la facture
                 if i[0] == "électricité" :
@@ -198,13 +207,13 @@ async def grapheConso(request : Request, periode : str, asked: str): #prend en p
                 anFacture = date_obj.year #récupéation de l'annee de la facture
                 print(anFacture)
                 if i[0] == "électricité" :
-                    consoElec[anFacture-2023] += i[1] 
+                    consoElec[anFacture-2024] += i[1] 
                 elif i[0] == "eau" : 
-                    consoEau[anFacture-2023] += i[1] 
+                    consoEau[anFacture-2024] += i[1] 
                 elif i[0] == "déchets" :
-                    consoDechets[anFacture-2023] += i[1] 
+                    consoDechets[anFacture-2024] += i[1] 
                 elif i[0] == "copropriété" :
-                    consoCopro[anFacture-2023] += i[1] 
+                    consoCopro[anFacture-2024] += i[1] 
                 else :
                     print(i)
                     print(i[0])
@@ -386,59 +395,90 @@ async def getCapteurs(request:Request):
     conn = sqlite3.connect("./app/logement.db")
     conn.row_factory = dict_factory
     cursor = conn.cursor()
-    res = cursor.execute("SELECT id, ref_commerce, ref_piece, date_insertion, port_comm, idType, idPiece FROM Capteur_actio")
+    res = cursor.execute("SELECT id, ref_commerce, date_insertion, port_comm, idType, idPiece FROM Capteur_actio")
     res = res.fetchall()
+    mesures={}
+    unites={}
+    for i in res :
+        mesure = cursor.execute("SELECT valeur FROM Mesure WHERE id = ?",(i['id'],))
+        mesure = mesure.fetchone()
+        mesures[i['id']]=mesure['valeur']
+        unite = cursor.execute("SELECT unite FROM Type_capteur_actio WHERE id = ?",(i['idType'],))
+        unite = unite.fetchone()
+        unites[i['id']]=unite['unite']
+        print(mesure)
+        
     conn.close()
-    return templates.TemplateResponse("./tempsreel.html", {"request": request, "res":res})
+    print(mesures)
+    return templates.TemplateResponse("./tempsreel.html", {"request": request, "res":res, "mesures":mesures, "unites":unites})
 
 
 @app.post("/creerCapteurActio")
-async def creerCapteurActio(ref_commerce: str, ref_piece: str, port_comm: int, idType: int, idPiece: int):
+async def creerCapteurActio(ref_commerce: str, port_comm: int, idType: int, idPiece: int):
     conn = sqlite3.connect("./app/logement.db")
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO Capteur_actio (ref_commerce, ref_piece, port_comm, idType, idPiece) VALUES (?, ?, ?, ?, ?)",(ref_commerce, ref_piece, port_comm, idType, idPiece))
+        "INSERT INTO Capteur_actio (ref_commerce, port_comm, idType, idPiece) VALUES (?, ?, ?, ?)",(ref_commerce, port_comm, idType, idPiece))
     conn.commit()
     id_capteur = cursor.lastrowid
 
-    res = cursor.execute("SELECT id, ref_commerce, ref_piece, date_insertion, port_comm, idType, idPiece FROM Capteur_actio WHERE id = ?",(id_capteur,))
+    res = cursor.execute("SELECT id, ref_commerce, date_insertion, port_comm, idType, idPiece FROM Capteur_actio WHERE id = ?",(id_capteur,))
     capteur = res.fetchone()
     if capteur is None:
         conn.close()
         return {"Erreur": "Le capteur/actionneur n'a pas été trouvé dans la base de données après l'insertion"}
 
     conn.close()
-    return {"message": "capteur/actionneur créé", "id_capteur": capteur[0], "ref_commerce": capteur[1], "ref_piece": capteur[2], "date_insertion": capteur[3], "port_comm": capteur[4], "idType": capteur[5], "idPiece": capteur[6]}
+    return {"message": "capteur/actionneur créé", "id_capteur": capteur[0], "ref_commerce": capteur[1], "date_insertion": capteur[2], "port_comm": capteur[3], "idType": capteur[4], "idPiece": capteur[5]}
 
 
-# Créer capteur VIA FORM
+# # Créer capteur VIA FORM
 @app.get("/getCapteurActiForm")
 async def getCapteurActioForm(request: Request):
     return templates.TemplateResponse("configurations.html", {"request": request})
 
+def ajoutMesureRand(idCapteur_i : int) :
+    if idCapteur_i == 1 : 
+        valeur_i = random.randint(-60,60)
+    elif idCapteur_i == 2 :
+        valeur_i = random.randint(0,100)
+    elif idCapteur_i == 3 :
+        valeur_i = random.randint(0,200)  
+    elif idCapteur_i == 4 : 
+        valeur_i = random.randint(0,500)
+    else : 
+        valeur_i = random.randint(0,1)
+    
+    return valeur_i
+
+
 @app.post("/creerCapteurActioForm")
 # nom des param identiques à ceux dans le html : name=""
-async def creerCapteurActioForm( request: Request, ref_commerce: str = Form(...),ref_piece: str = Form(...),port_comm: int = Form(...),idType: int = Form(...),idPiece: int = Form(...)):
+async def creerCapteurActioForm( request: Request, ref_commerce: str = Form(...),port_comm: int = Form(...),idType: int = Form(...),idPiece: int = Form(...)):
     print("Dans creerCapteurActioForm")
     conn = sqlite3.connect("./app/logement.db")
     print("Dans conexion sqlite")
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO Capteur_actio (ref_commerce, ref_piece, port_comm, idType, idPiece) VALUES (?, ?, ?, ?, ?)",
-        (ref_commerce, ref_piece, port_comm, idType, idPiece)
+        "INSERT INTO Capteur_actio (ref_commerce, port_comm, idType, idPiece) VALUES (?, ?, ?, ?)",
+        (ref_commerce, port_comm, idType, idPiece)
     )
     conn.commit()
     print("Après insert into")
-    id_capteur = cursor.lastrowid
-    res = cursor.execute("SELECT id, ref_commerce, ref_piece, date_insertion, port_comm, idType, idPiece FROM Capteur_actio WHERE id = ?", (id_capteur,))
-    capteur = res.fetchone()
-    if capteur is None:
-        conn.close()
-        return {"Erreur": "Le capteur/actionneur n'a pas été trouvé dans la base de données après l'insertion"}
 
+    # Retourner infos capteur crée
+    id_capteur = cursor.lastrowid
+    # res = cursor.execute("SELECT id, ref_commerce, date_insertion, port_comm, idType, idPiece FROM Capteur_actio WHERE id = ?", (id_capteur,))
+    # capteur = res.fetchone()
+    # if capteur is None:
+    #     conn.close()
+    #     return {"Erreur": "Le capteur/actionneur n'a pas été trouvé dans la base de données après l'insertion"}
+
+    # Ajouter une mesure random
+    mesure = ajoutMesureRand(id_capteur)
+    cursor.execute("INSERT INTO Mesure (valeur, idCapteur) VALUES (?, ?)",(mesure, id_capteur))
+    conn.commit()
     conn.close()
-    # return {"message": "capteur/actionneur créé", "id_capteur": capteur[0], "ref_commerce": capteur[1], "ref_piece": capteur[2], "date_insertion": capteur[3], "port_comm": capteur[4], "idType": capteur[5], "idPiece": capteur[6]}
-    # return JSONResponse(content={"message": "Capteur/actionneur créé avec succès"})
     return templates.TemplateResponse("configurations.html", {"request": request})
 
 

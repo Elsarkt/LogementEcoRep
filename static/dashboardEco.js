@@ -47,7 +47,7 @@
             display: true,
             labels: {
               font: {
-                  size: 12 // Optionnel : Ajustez la taille de la police si nécessaire
+                  size: 12 
               }
             }
           },

@@ -2,6 +2,7 @@
   'use strict'  
   // Graphs
   // Récupération des données depuis des balises data-* injectées dans le HTML
+  // Chatgpt : comment rendre les variables jinja passées à mon html 
   const labels = JSON.parse(document.getElementById('charts-data-labels').dataset.labels);
   const consoElec = JSON.parse(document.getElementById('charts-data-consoelec').dataset.consoelec);
   const consoEau = JSON.parse(document.getElementById('charts-data-consoeau').dataset.consoeau);
@@ -10,6 +11,7 @@
   console.log({ labels, consoElec, consoEau, consoDechets, consoCopro });
   // const ctx = document.getElementById('myChart')
   // eslint-disable-next-line no-unused-vars
+  
   const createChart = (ctx, label, data) => { //Fonction de création de graph
     new Chart(ctx, {
       type: 'line',

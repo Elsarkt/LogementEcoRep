@@ -2,6 +2,7 @@ body {
   padding-bottom: 20px;
 }
 
+/* chatgpt : sans utiliser les variables css bootstrap, quelles sont les caractéristiques de la navbar que je peux modifier dans mon fichier css hormis la couleur */
 .navbar {
 background-color: var(--bs-success) !important;
 color: var(--bs-info) ;
